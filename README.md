@@ -6,5 +6,7 @@
 
 未执行报名、购票或GitHub发布。
 
+呈现更新：默认按同时段分组，短卡片选场，点击弹窗查看完整报名条件。
+
 GitHub Pages： https://rae-gu.github.io/fundraiser-2026-guide/
 从main分支根目录发布。
