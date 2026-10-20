@@ -491,7 +491,7 @@
       const [title,sub]=SHORT[s.id]||[s.title,s.track||''];
       const gate=s.access==='approval'?'需申请 / 遴选':s.access==='separate'?'需另报名':s.id==='ai-workshop'?'限30席 · 自带电脑':'';
       const status=picks[s.id]||'';
-      return `<article class="choice ${status?'chosen':''}"><button class="choice-open" data-detail="${esc(s.id)}"><div class="choice-meta"><span>${esc(labelKind(s.kind))}</span>${s.room&&ROOM_UPDATES[s.id]?`<span class="room-label">⌖ ${esc(s.room)}</span>`:}${gate?`<span class="tag warm">${esc(gate)}</span>`:''}</div><h4>${esc(title)}</h4><p>${esc(sub)}</p></button><div class="choice-bottom"><button class="choice-detail" data-detail="${esc(s.id)}">查看详情 ↗</button><button class="btn btn-sm ${status?'going active':''}" data-pick="want" data-id="${esc(s.id)}">${status?'✓ 已选':'＋ 想去'}</button></div></article>`;
+      return `<article class="choice ${status?'chosen':''}"><button class="choice-open" data-detail="${esc(s.id)}"><div class="choice-meta"><span>${esc(labelKind(s.kind))}</span>${s.room&&ROOM_UPDATES[s.id]?`<span class="room-label">⌖ ${esc(s.room)}</span>`: ''}${gate?`<span class="tag warm">${esc(gate)}</span>`:''}</div><h4>${esc(title)}</h4><p>${esc(sub)}</p></button><div class="choice-bottom"><button class="choice-detail" data-detail="${esc(s.id)}">查看详情 ↗</button><button class="btn btn-sm ${status?'going active':''}" data-pick="want" data-id="${esc(s.id)}">${status?'✓ 已选':'＋ 想去'}</button></div></article>`;
     }
 
     const SLOTS=[
@@ -521,7 +521,7 @@
       return `<div class="toolbar"><div class="filter-group">${[['all','两天'],['2026-10-23','10/23 周五'],['2026-10-24','10/24 周六']].map(([d,t])=>`<button data-day="${d}" class="chip ${dayFilter===d?'active':''}">${t}</button>`).join('')}</div><label class="search-control">⌕ <input id="qInput" value="${esc(query)}" placeholder="搜索场次" aria-label="搜索场次"></label></div>${body||'<div class="empty">没有匹配的场次</div>'}`;
     }
     let detailId='';
-    function openDetail(id){const s=byId(id);if(!s)return;detailId=id;$('#detailBody').innerHTML=`<h2>${esc(s.title)}</h2><p class="agenda-note">${esc(when(s))} · ${esc(s.room||'具体房间待通知')}</p>${s.roomSource?`<a class="room-source" href="${HANDBOOK}" target="_blank" rel="noopener">会场信息：主办方会议手册 ↗</a>`:}${agendaHtml(s)}<hr style="border:0;border-top:1px solid var(--line);margin:22px 0">${sessionCard(s)}`;if(!$('#detailModal').open)$('#detailModal').showModal();}
+    function openDetail(id){const s=byId(id);if(!s)return;detailId=id;$('#detailBody').innerHTML=`<h2>${esc(s.title)}</h2><p class="agenda-note">${esc(when(s))} · ${esc(s.room||'具体房间待通知')}</p>${s.roomSource?`<a class="room-source" href="${HANDBOOK}" target="_blank" rel="noopener">会场信息：主办方会议手册 ↗</a>`: ''}${agendaHtml(s)}<hr style="border:0;border-top:1px solid var(--line);margin:22px 0">${sessionCard(s)}`;if(!$('#detailModal').open)$('#detailModal').showModal();}
 
     let compareSlot='2026-10-23:14:00';
 
