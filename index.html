@@ -550,7 +550,7 @@
       if(button.dataset.sourceNew){openNewFromSource(button.dataset.sourceNew);return;}
       if(button.dataset.pick){togglePick(button.dataset.id,button.dataset.pick);return;}
       if(button.dataset.edit){$('#detailModal').close();openEdit(button.dataset.edit);return;}
-      if(button.dataset.expand){expanded[button.dataset.expand]=!expanded[button.dataset.expand];render();return;}
+      if(button.dataset.expand){expanded[button.dataset.expand]=!expanded[button.dataset.expand];render();if($('#detailModal').open)openDetail(button.dataset.expand);return;}
       if(button.dataset.action==='add')openEdit();
       if(button.dataset.action==='clear-filters'){dayFilter='all';trackFilter='all';accessFilter='all';query='';render();}
       if(button.dataset.action==='copy')copyText(plainList());
