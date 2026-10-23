@@ -43,6 +43,8 @@
 @media(max-width:580px){.guest-grid{grid-template-columns:1fr}.guest-card{padding:17px}}
 .round-expanded{margin-top:22px}.round-expanded-head{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}.round-expanded-head h3{font-size:18px;margin:0}.round-expanded-head span,.round-rule{font-size:12px;color:var(--muted)}.round-topic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.round-topic{background:#fff;border:1px solid var(--line);border-radius:11px;padding:15px}.round-topic strong{font-size:13px;line-height:1.6}.round-topic p{font-size:12px;color:var(--muted);margin:7px 0 0}@media(max-width:850px){.round-topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:580px){.round-topic-grid{grid-template-columns:1fr}}
 .handbook-links{display:flex;flex-wrap:wrap;gap:12px 22px;padding:16px 2px 0}.handbook-links a{font-size:12px;color:#4b7162;text-decoration:none}.handbook-links a:hover{text-decoration:underline}.room-label{margin-left:auto;color:#3c7860;font-weight:700;font-size:12px}.board-room{color:#396c57!important;font-weight:700}.room-source{display:block;margin:7px 0 0;font-size:11px;color:#788b80}
+
+    .board-grid{position:relative}.local-clock{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;color:var(--muted);font-size:12px}.local-clock time{color:var(--dark);font-weight:700;font-variant-numeric:tabular-nums}.clock-dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}.board-now{position:absolute;left:0;right:0;border-top:2px solid var(--accent);z-index:5;pointer-events:none}.board-now[hidden]{display:none}.board-now span{position:absolute;left:0;top:-10px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}.board-event .speaker-info{margin-top:4px}.speaker-role{display:block;color:#687d73;font-size:10px;line-height:1.45;margin-top:1px}.board-event strong{-webkit-line-clamp:3;flex-shrink:0}.board-event .event-clock,.board-event>small{flex-shrink:0}.board-event.short .speaker-info{display:none}
 </style>
 </head>
 <body>
@@ -501,13 +503,45 @@
       ['2026-10-24','09:00','10月24日 · 上午','09:00–12:00'],
       ['2026-10-24','14:00','10月24日 · 下午','14:00–17:00']
     ];
+    // Roles verified against institutional profiles; unknown roles retain the existing affiliation.
+    const GUEST_ROLES={
+      '史迈':{title:'助理研究员',source:'https://www.sppm.tsinghua.edu.cn/yjjg/csyjs/shzzyshzlyjs.htm'},
+      '叶士华':{title:'副教授',source:'https://homepage.hit.edu.cn/yeshihua'},
+      '马剑银':{title:'副教授、法学院党委副书记',source:'https://bnulaw.bnu.edu.cn/teacher/35/index.html'},
+      '高鹏飞':{title:'公益平台产品负责人',source:'https://spa.dufe.edu.cn/content_98715.html'}
+    };
+    function speakerText(text){
+      return text.replace(/[^、；：，/]+/g,part=>{
+        const name=part.trim(),g=GUESTS.find(g=>g.name===name);
+        return g?name+' · '+[g.org,GUEST_ROLES[name]?.title].filter(Boolean).join(' · '):part;
+      });
+    }
+    function speakerHtml(text){
+      return text.split(/(?<=[、；])/).map(part=>{
+        const names=GUESTS.filter(g=>part.includes(g.name));
+        if(!names.length)return esc(part);
+        let label=esc(part);
+        names.forEach(g=>{const role=[g.org,GUEST_ROLES[g.name]?.title].filter(Boolean).join(' · ');if(role)label=label.replace(esc(g.name),esc(g.name)+`<span class="speaker-role">${esc(role)}</span>`);});
+        return `<span class="speaker-info">${label}</span>`;
+      }).join('');
+    }
+    function updateLocalTime(now=new Date()){
+      const el=document.getElementById('localTime');if(!el)return;
+      el.textContent=now.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});el.dateTime=now.toISOString();
+      const zone=document.getElementById('localZone');zone.textContent=Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const line=document.getElementById('boardNow'),grid=document.querySelector('.board-grid');if(!line||!grid)return;
+      const day=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+      const minute=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+      line.hidden=day!==grid.dataset.day||minute<Number(grid.dataset.start)||minute>=Number(grid.dataset.end);
+      if(!line.hidden){line.style.top=(grid.querySelector('.board-head').offsetHeight+(minute-Number(grid.dataset.start))*Number(grid.dataset.scale))+'px';line.firstElementChild.textContent=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});}
+    }
     const agendaEntries=s=>AGENDAS[s.id]||[];
     function agendaHtml(s){
       const items=agendaEntries(s);
       if(!items.length)return '<p class="agenda-note">全程开放，未公布分段议程。</p>';
       const timed=items.some(x=>x.start);
       const table=s.kind==='roundtable';
-      return `<h3 class="agenda-heading">${table?'圆桌主题':'具体议程'}</h3>${!timed?`<p class="agenda-note">${table?'各桌同时进行，每桌3轮、每轮55分钟；各轮起止未公布。':'原文未公布各环节的具体起止时间。'}</p>`:''}<ol class="agenda-list">${items.map((x,i)=>`<li><time>${x.start?esc(x.start+'–'+x.end):table?'并行桌 '+(i+1):'环节 '+(i+1)}</time><div><strong>${esc(x.title)}</strong>${x.speaker?`<p>${esc(x.speaker)}</p>`:''}</div></li>`).join('')}</ol><a class="source-link" href="${esc(safeUrl(s.source))}" target="_blank" rel="noopener">议程原文 ↗</a>`;
+      return `<h3 class="agenda-heading">${table?'圆桌主题':'具体议程'}</h3>${!timed?`<p class="agenda-note">${table?'各桌同时进行，每桌3轮、每轮55分钟；各轮起止未公布。':'原文未公布各环节的具体起止时间。'}</p>`:''}<ol class="agenda-list">${items.map((x,i)=>`<li><time>${x.start?esc(x.start+'–'+x.end):table?'并行桌 '+(i+1):'环节 '+(i+1)}</time><div><strong>${esc(x.title)}</strong>${x.speaker?`<p>${speakerHtml(x.speaker)}</p>`:''}</div></li>`).join('')}</ol><a class="source-link" href="${esc(safeUrl(s.source))}" target="_blank" rel="noopener">议程原文 ↗</a>`;
     }
     function renderAll(){
       const list=filterSessions(allSessions());
@@ -531,13 +565,13 @@
       const slot=SLOTS.find(x=>x[0]+':'+x[1]===compareSlot)||SLOTS[1];
       const all=allSessions().filter(s=>s.day===slot[0]&&s.start===slot[1]);
       const sessions=all.filter(s=>s.kind!=='roundtable'),rounds=all.filter(s=>s.kind==='roundtable');
-      const start=minutes(slot[1]),end=Math.max(...all.map(s=>minutes(s.end))),scale=6,height=(end-start)*scale;
+      const start=minutes(slot[1]),end=Math.max(...all.map(s=>minutes(s.end))),scale=8,height=(end-start)*scale;
       let ticks='';for(let t=start;t<=end;t+=30)ticks+=`<span class="board-tick" style="top:${Math.max(10,(t-start)*scale)}px">${clock(t)}</span>`;
       const lanes=sessions.map(s=>{
         const entries=agendaEntries(s),timed=entries.filter(e=>e.start);
-        return `<section class="board-lane"><div class="board-head"><button class="choice-open" data-detail="${esc(s.id)}">${esc(SHORT[s.id]?.[0]||s.title)} ↗</button><small><span class="board-room">${esc(s.room||'会场待通知')}</span> · ${s.start}–${s.end}${picks[s.id]?' · 已选':''}</small></div><div class="board-body" style="height:${height}px">${timed.length?timed.map(e=>{const duration=minutes(e.end)-minutes(e.start);return `<button class="board-event ${duration<10?'short':''} ${/茶歇|合影/.test(e.title)?'break':''}" style="--top:${(minutes(e.start)-start)*scale+2}px;--duration:${duration*scale-4}px" data-detail="${esc(s.id)}" title="${esc(e.start+'–'+e.end+' '+e.title+(e.speaker?' · '+e.speaker:''))}" aria-label="${esc(e.start+'–'+e.end+' '+e.title)}"><span class="event-clock">${e.start}–${e.end}</span><strong>${esc(e.title)}</strong>${duration>=20&&e.speaker?`<small>${esc(e.speaker)}</small>`:''}</button>`;}).join(''):`<div class="board-untimed"><span class="tag slate">环节未分时</span><ol>${entries.map(e=>`<li>${esc(e.title)}</li>`).join('')}</ol></div>`}</div></section>`;
+        return `<section class="board-lane"><div class="board-head"><button class="choice-open" data-detail="${esc(s.id)}">${esc(SHORT[s.id]?.[0]||s.title)} ↗</button><small><span class="board-room">${esc(s.room||'会场待通知')}</span> · ${s.start}–${s.end}${picks[s.id]?' · 已选':''}</small></div><div class="board-body" style="height:${height}px">${timed.length?timed.map(e=>{const duration=minutes(e.end)-minutes(e.start);return `<button class="board-event ${duration<10?'short':''} ${/茶歇|合影/.test(e.title)?'break':''}" style="--top:${(minutes(e.start)-start)*scale+2}px;--duration:${duration*scale-4}px" data-detail="${esc(s.id)}" title="${esc(e.start+'–'+e.end+' '+e.title+(e.speaker?' · '+speakerText(e.speaker):''))}" aria-label="${esc(e.start+'–'+e.end+' '+e.title)}"><span class="event-clock">${e.start}–${e.end}</span><strong>${esc(e.title)}</strong>${duration>=15&&e.speaker?`<small>${speakerHtml(e.speaker)}</small>`:''}</button>`;}).join(''):`<div class="board-untimed"><span class="tag slate">环节未分时</span><ol>${entries.map(e=>`<li>${esc(e.title)}</li>`).join('')}</ol></div>`}</div></section>`;
       }).join('');
-      return `<div class="section-head"><div><h2>议程对照</h2></div></div><div class="compare-tabs">${SLOTS.map(x=>`<button class="chip ${x===slot?'active':''}" data-compare="${x[0]+':'+x[1]}">${x[2]}</button>`).join('')}</div><p class="matrix-hint">时间从上往下 · 左右滑动看各场 · 点击环节看详情</p><div class="board-scroll" tabindex="0" role="region" aria-label="${esc(slot[2])}等比例议程对照"><div class="board-grid" style="--lanes:${sessions.length};--board-min:${66+sessions.length*210}px"><div class="board-axis"><div class="board-head">时间</div><div class="board-axis-body" style="height:${height}px">${ticks}</div></div>${lanes}</div></div><p class="board-foot">空白处为原文未公布的分段。未标分段时间的场次仅展示环节顺序。</p>${rounds.map(s=>`<section class="round-expanded"><div class="round-expanded-head"><h3>${esc(SHORT[s.id]?.[0]||s.title)}</h3><span>${s.start}–${s.end} · 每桌3轮，每轮55分钟 · ${esc(s.room)}</span></div><div class="round-topic-grid">${agendaEntries(s).map(e=>`<article class="round-topic"><strong>${esc(e.title)}</strong><p>${esc(e.speaker)}</p></article>`).join('')}</div><p class="round-rule">各桌同时进行 · 每轮8人 · 个性提问需先到市集领取筹码</p></section>`).join('')}`;
+      return `<div class="section-head"><div><h2>议程对照</h2></div></div><div class="compare-tabs">${SLOTS.map(x=>`<button class="chip ${x===slot?'active':''}" data-compare="${x[0]+':'+x[1]}">${x[2]}</button>`).join('')}</div><div class="local-clock"><span class="clock-dot" aria-hidden="true"></span><span>本机时间</span><time id="localTime"></time><span id="localZone"></span><span>· 当前时段内显示橙色时间线</span></div><p class="matrix-hint">时间从上往下 · 左右滑动看各场 · 点击环节看详情</p><div class="board-scroll" tabindex="0" role="region" aria-label="${esc(slot[2])}等比例议程对照"><div class="board-grid" data-day="${slot[0]}" data-start="${start}" data-end="${end}" data-scale="${scale}" style="--lanes:${sessions.length};--board-min:${66+sessions.length*210}px"><div class="board-axis"><div class="board-head">时间</div><div class="board-axis-body" style="height:${height}px">${ticks}</div></div>${lanes}<div id="boardNow" class="board-now" hidden aria-hidden="true"><span></span></div></div></div><p class="board-foot">空白处为原文未公布的分段。未标分段时间的场次仅展示环节顺序。</p>${rounds.map(s=>`<section class="round-expanded"><div class="round-expanded-head"><h3>${esc(SHORT[s.id]?.[0]||s.title)}</h3><span>${s.start}–${s.end} · 每桌3轮，每轮55分钟 · ${esc(s.room)}</span></div><div class="round-topic-grid">${agendaEntries(s).map(e=>`<article class="round-topic"><strong>${esc(e.title)}</strong><p>${speakerHtml(e.speaker)}</p></article>`).join('')}</div><p class="round-rule">各桌同时进行 · 每轮8人 · 个性提问需先到市集领取筹码</p></section>`).join('')}`;
     }
     function renderAccess(){const all=allSessions(),selected=currentSelection(),urgent=selected.filter(needsAttention),known=all.filter(s=>gateCode(s)!=='unknown').length,unresolved=all.length-known;
       return `<div class="section-head"><div><span class="kicker">ENTRY REQUIREMENTS · 报名与资格</span><h2>报名与入场</h2><p>查看场次要求，记录报名进度。</p></div><button class="btn btn-primary" data-view="inbox">查看 16 篇公众号线索 →</button></div>
@@ -574,7 +608,7 @@
       const list=GUESTS.filter(g=>(!guestQuery||[g.name,g.org,...g.sessions.map(id=>byId(id)?.title||'')].join(' ').toLowerCase().includes(guestQuery.toLowerCase()))&&(guestDay==='all'||g.sessions.some(id=>byId(id)?.day===guestDay))).sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
       return `<div class="section-head"><h2>嘉宾</h2><span class="guest-count">${list.length}位</span></div><div class="toolbar"><div class="filter-group">${[['all','两天'],['2026-10-23','10/23 周五'],['2026-10-24','10/24 周六']].map(([d,t])=>`<button class="chip ${d===guestDay?'active':''}" data-guest-day="${d}">${t}</button>`).join('')}</div><label class="search-control">⌕ <input id="guestSearch" value="${esc(guestQuery)}" placeholder="搜索姓名、机构、议题" aria-label="搜索嘉宾"></label></div><div class="guest-grid">${list.map(g=>`<article class="guest-card"><div class="guest-top"><span class="guest-mark" aria-hidden="true">${esc(g.name[0])}</span><div><h3>${esc(g.name)}</h3><p class="guest-org">${esc(g.org)}</p></div></div>${g.sessions.map(id=>byId(id)).filter(Boolean).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start)).map(session=>{const specific=agendaEntries(session).filter(e=>e.speaker.includes(g.name)&&e.start).map(e=>e.start+'–'+e.end);return `<button class="guest-session" data-detail="${esc(session.id)}"><strong>${esc(SHORT[session.id]?.[0]||session.title)} ↗</strong><small>${esc(displayDay(session.day))} · ${specific.length?esc(specific.join(' / ')):esc(session.start+'–'+session.end)+'（场次时间）'}</small></button>`;}).join('')}</article>`).join('')}</div>${list.length?'':'<div class="empty">没有匹配的嘉宾</div>'}`;
     }
-    function render(){const root=$('#viewRoot');root.innerHTML=selectedView==='guests'?renderGuests():selectedView==='timeline'?renderTimeline():selectedView==='access'?renderAccess():selectedView==='mine'?renderMine():selectedView==='inbox'?renderInbox():selectedView==='sources'?renderSources():renderAll();updateStats();}
+    function render(){const root=$('#viewRoot');root.innerHTML=selectedView==='guests'?renderGuests():selectedView==='timeline'?renderTimeline():selectedView==='access'?renderAccess():selectedView==='mine'?renderMine():selectedView==='inbox'?renderInbox():selectedView==='sources'?renderSources():renderAll();updateStats();updateLocalTime();}
     function togglePick(id,value){if(!byId(id))return; picks[id]=picks[id]===value?'':value;save();render();if($('#detailModal').open)openDetail(id);toast(picks[id]==='going'?'已标记为计划参加':picks[id]==='want'?'已加入想去清单':'已从我的安排中移除');}
     function openEdit(id){const isBase=BASE.some(x=>x.id===id),s=id?byId(id):null;
       $('#fieldId').value=id||'';$('#modalTitle').textContent=s?'补充 / 编辑会议信息':'补充一场会议';
@@ -630,6 +664,10 @@
     $('#detailClose').onclick=()=>$('#detailModal').close();
     $('#detailModal').addEventListener('click',e=>{if(e.target===$('#detailModal'))$('#detailModal').close();});
     render();receiveShared();
+    setInterval(updateLocalTime,1000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateLocalTime();});
+    window.addEventListener('resize',()=>updateLocalTime());
   </script>
 </body>
 </html>
+
