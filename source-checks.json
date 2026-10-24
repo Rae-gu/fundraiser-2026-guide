@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-20",
+  "checkedAt": "2026-10-24",
   "scope": "16篇正文；图片信息未逐张核对",
   "articles": {
     "wx01": {
@@ -97,6 +97,19 @@
       "status": "checked",
       "sessionId": "",
       "notes": "已读取正文。综合预告/全议程文章，避免与最新单场公告重复计数；图片内完整议程尚未逐张核对。"
+    },
+    "wx17": {
+      "title": "倒计时3天！收好会议手册，约一场预告直播，选好23日晚该去哪",
+      "url": "http://mp.weixin.qq.com/s?__biz=Mzk1NzYzMzkxNg==&mid=2247508680&idx=1&sn=cf960f8273405a434497673567992904&chksm=c3d9a6dbf4ae2fcd46b7ec7e1ce68c28d76c91eb746cbe14271d098af77770c8acf2852e6312#rd",
+      "status": "checked",
+      "sessionId": "ai-workshop",
+      "notes": "正文明确AI实操工作坊及夜谈需报名；手册入口已在网站，过期直播不加入行程。"
+    },
+    "wx18": {
+      "title": "嘉宾阵容 | 10/23，我们上海见",
+      "url": "http://mp.weixin.qq.com/s?__biz=Mzk1NzYzMzkxNg==&mid=2247508705&idx=1&sn=1fef370193f6b1b7a9c7c3e90c9ab2bd&chksm=c3d9a6f2f4ae2fe42d2fc3a69bffdb098bc9eb95ebf61dc38007daa5995cc8e6bbedbb151b50#rd",
+      "status": "checked",
+      "notes": "已核对正文及主论坛、气候、数字AI、消费捐、月捐及圆桌阵容图片。新列金蚊蚊、王真真、李德健；罗海岳和朱秋霞增加消费捐关联，周轩宇机构校正。最新主论坛阵容未公布新嘉宾具体出场时间，不推定个人时段。"
     }
   }
 }
