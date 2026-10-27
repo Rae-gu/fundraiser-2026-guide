@@ -1,6 +1,6 @@
 # 不撞场｜2026 筹款人交流会参会助手
 
-**[打开参会页面](https://rae-gu.github.io/fundraiser-2026-guide/)** · [GitHub 项目地址](https://github.com/Rae-gu/fundraiser-2026-guide)
+**[打开参会页面](https://rae-gu.github.io/fundraiser-2026-guide/)** · [GitHub 项目地址](https://github.com/Rae-gu/fundraiser-2026-guide) · [产品案例与复盘](./CASE_STUDY.md)
 
 ## 写在前面
 
